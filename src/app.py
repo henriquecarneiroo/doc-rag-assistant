@@ -44,22 +44,25 @@ with st.sidebar:
     
     if botao_processar:
         if arquivo_pdf is not None:
-            with st.spinner("Lendo PDF, fatiando em chunks e gerando embeddings..."):
-                # Garante que a pasta existe e salva o documento la
-                os.makedirs("data", exist_ok=True)
-                caminho_temp = os.path.join("data", "documento_atual.pdf")
-                
-                with open(caminho_temp, "wb") as f:
-                    f.write(arquivo_pdf.getbuffer())
+            try:
+                with st.spinner("Lendo PDF, fatiando em chunks e gerando embeddings..."):
+                    # Garante que a pasta existe e salva o documento la
+                    os.makedirs("data", exist_ok=True)
+                    caminho_temp = os.path.join("data", "documento_atual.pdf")
                     
-                chunks = load_and_split_pdf(
-                    caminho_temp,
-                    chunk_size=chunk_size,
-                    chunk_overlap=chunk_overlap
-                )
-                save_to_chroma(chunks, clear_existing=True)
-                
-                st.success(f"Sucesso! Documento dividido em **{len(chunks)} chunks** e salvo no banco.")
+                    with open(caminho_temp, "wb") as f:
+                        f.write(arquivo_pdf.getbuffer())
+                        
+                    chunks = load_and_split_pdf(
+                        caminho_temp,
+                        chunk_size=chunk_size,
+                        chunk_overlap=chunk_overlap
+                    )
+                    save_to_chroma(chunks, clear_existing=True)
+                    
+                    st.success(f"Sucesso! Documento dividido em **{len(chunks)} chunks** e salvo no banco.")
+            except Exception as erro:
+                st.error(f"Erro ao processar o documento: {erro}")
         else:
             st.warning("Por favor, selecione um arquivo PDF primeiro.")
             
@@ -93,26 +96,30 @@ if pergunta_usuario:
             "role": "user",
             "content": pergunta_usuario
         })
+        
         # Chama a engine e mostra a resposta da IA
         with st.chat_message("assistant"):
-            with st.spinner("Consultando banco vetorial e gerando resposta..."):
-                resultado = ask_question(pergunta_usuario, k=k_chunks)
+            try:    
+                with st.spinner("Consultando banco vetorial e gerando resposta..."):
+                    resultado = ask_question(pergunta_usuario, k=k_chunks)
+                    
+                    resposta_texto = resultado["resposta"]
+                    paginas_fontes = resultado["fontes"]
+                    chunks_usados = resultado["chunks_usados"]
+                    
+                    st.markdown(resposta_texto)
+                    
+                    # Aba recolhida para visualizar os chunks
+                    with st.expander(f"Ver trechos consultados (Páginas: {paginas_fontes})"):
+                        for trecho in chunks_usados:
+                            st.info(trecho)
                 
-                resposta_texto = resultado["resposta"]
-                paginas_fontes = resultado["fontes"]
-                chunks_usados = resultado["chunks_usados"]
-                
-                st.markdown(resposta_texto)
-                
-                # Aba recolhida para visualizar os chunks
-                with st.expander(f"Ver trechos consultados (Páginas: {paginas_fontes})"):
-                    for trecho in chunks_usados:
-                        st.info(trecho)
-                
-        # Salva resposta da IA no historico da sessao
-        st.session_state.historico_mensagens.append({
-            "role": "assistant",
-            "content": resposta_texto,
-            "fontes": paginas_fontes,
-            "chunks": chunks_usados
-        })
+                # Salva no historico se a resposta deu certo
+                st.session_state.historico_mensagens.append({
+                    "role": "assistant",
+                    "content": resposta_texto,
+                    "fontes": paginas_fontes,
+                    "chunks": chunks_usados
+                })
+            except Exception as erro:
+                st.error(f"Ocorreu um erro ao consultar a IA: {erro}")

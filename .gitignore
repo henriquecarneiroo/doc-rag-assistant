@@ -12,3 +12,5 @@ chroma_db/
 # Arquivos de teste
 data/
 data/*.pdf
+
+.vscode/

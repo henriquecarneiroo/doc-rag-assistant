@@ -11,7 +11,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
-from ingest import CHROMA_PATH, EMBEDDING_MODEL_NAME
+from ingest import CHROMA_PATH, get_embedding_model
 
 # Carrega variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -38,10 +38,7 @@ def get_vector_db() -> Chroma:
             f"Banco vetorial não encontrado em '{CHROMA_PATH}. Rode o script 'src/ingest.py' primeiro."
         )
         
-    embedding_model = HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL_NAME,
-        encode_kwargs={"normalize_embeddings": True}
-    )
+    embedding_model = get_embedding_model()
     
     # Chroma direto para ler do disco local
     vector_db = Chroma(

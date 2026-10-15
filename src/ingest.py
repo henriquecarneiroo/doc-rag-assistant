@@ -1,5 +1,5 @@
 import os
-import shutil
+from functools import lru_cache
 
 # Silenciar aviso de symlinks da HF no Windows
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
@@ -15,6 +15,17 @@ from chromadb.config import Settings
 CHROMA_PATH = "chroma_db"
 EMBEDDING_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
+@lru_cache(maxsize=1)
+def get_embedding_model() -> HuggingFaceEmbeddings:
+    """
+    Carrega o modelo de embeddings apenas na primeira vez e mantém na memória RAM.
+    """
+    print("Inicializando modelo de embeddings na memória...")
+    return HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL_NAME,
+        encode_kwargs={"normalize_embeddings": True}
+    )
+
 def load_and_split_pdf(pdf_path: str, chunk_size: int = 250, chunk_overlap: int = 80) -> list:
     """
     Lê um arquivo PDF e divide seu conteúdo em chuncks
@@ -23,6 +34,11 @@ def load_and_split_pdf(pdf_path: str, chunk_size: int = 250, chunk_overlap: int 
     # Verifica se o arquivo existe no caminho informado
     if not os.path.exists(pdf_path):
         raise FileNotFoundError(f"Arquivo não encontrado no caminho: {pdf_path}")
+    
+    if chunk_overlap >= chunk_size:
+        raise ValueError(
+            f"O overlap deve ser menor que o tamanho do chunk."
+        )
     
     print(f"Carregando o documento: {pdf_path}")
     
@@ -39,6 +55,10 @@ def load_and_split_pdf(pdf_path: str, chunk_size: int = 250, chunk_overlap: int 
     )
     
     chunks = text_splitter.split_documents(pages)
+    
+    if not chunks:
+        raise ValueError("Nenhum texto extraído. Verifique se o PDF não é apenas imagem escaneada.")
+    
     print(f"Documento dividido em {len(chunks)} chunks com sucesso.\n")
     
     return chunks
@@ -47,29 +67,24 @@ def save_to_chroma(chunks: list, clear_existing: bool = True) -> Chroma:
     """
     Transforma os chunks em embeddings e salva no banco ChromaDB local.
     """
+    # Pega o modelo que já está na memória RAM
+    embedding_model = get_embedding_model()
     
-    # Se clear_existing for True e a pasta do banco já existir, apagamos para não duplicar os dados de teste.
-    if clear_existing and os.path.exists(CHROMA_PATH):
-        print(f"Limpando banco de dados antigo em '{CHROMA_PATH}'...")
-        shutil.rmtree(CHROMA_PATH)
-        
-    print("Inicializando modelo de embeddings...")
-    
-    # Carrega o modelo da HuggingFace que roda localmente na sua CPU
-    embedding_model = HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL_NAME,
-        encode_kwargs={"normalize_embeddings": True}
-    )
-    
-    print("Gerando vetores e salvando no ChromaDB...")
-    
-    # Cria o banco a partir dos documentos e já salva automaticamente na pasta 'CHROMA_PATH'        
-    vector_db = Chroma.from_documents(
-        documents=chunks,
-        embedding=embedding_model,
+    # Conecta ao banco ChromaDB existente
+    vector_db = Chroma(
         persist_directory=CHROMA_PATH,
+        embedding_function=embedding_model,
         client_settings=Settings(anonymized_telemetry=False)
     )
+    
+    # Se clear_existing for True, pede para o banco esvaziar os dados antigos
+    if clear_existing:
+        print("Limpando dados antigos da coleção no ChromaDB...")
+        vector_db.reset_collection()
+    
+    # Insere os novos chunks
+    print("Gerando vetores e salvando no ChromaDB...")
+    vector_db.add_documents(documents=chunks)
 
     print(f"Deu bom! {len(chunks)} chunks foram vetorizados e salvos em '{CHROMA_PATH}'.\n")
     

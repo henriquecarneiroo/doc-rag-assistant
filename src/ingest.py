@@ -15,7 +15,7 @@ from chromadb.config import Settings
 CHROMA_PATH = "chroma_db"
 EMBEDDING_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
-def load_and_split_pdf(pdf_path: str) -> list:
+def load_and_split_pdf(pdf_path: str, chunk_size: int = 250, chunk_overlap: int = 80) -> list:
     """
     Lê um arquivo PDF e divide seu conteúdo em chuncks
     """
@@ -33,8 +33,8 @@ def load_and_split_pdf(pdf_path: str) -> list:
     
     # Configura o splitter de texto
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size = 250, # Tamamho máximo de caracteres de cada chunk
-        chunk_overlap = 50, # Quantos caracteres se repetem entre um chunk e o próximo
+        chunk_size=chunk_size, # Tamamho máximo de caracteres de cada chunk
+        chunk_overlap=chunk_overlap, # Quantos caracteres se repetem entre um chunk e o próximo
         separators=["\n\n", "\n", ".", " ", ""] # Ordem de preferência para cortar o texto
     )
     

@@ -8,3 +8,7 @@ __pycache__/
 
 # Banco de dados vetorial local
 chroma_db/
+
+# Arquivos de teste
+data/
+data/*.pdf

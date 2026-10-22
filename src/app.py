@@ -1,4 +1,13 @@
 import os
+import logging
+
+# Desativar telemetria
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+
+# Silenciar warnings internos irrelevantes
+logging.getLogger("chromadb.telemetry.posthog").setLevel(logging.CRITICAL)
+
 import streamlit as st
 
 from ingest import load_and_split_pdf, save_to_chroma, CHROMA_PATH

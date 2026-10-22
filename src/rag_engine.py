@@ -1,9 +1,5 @@
 import os
 
-# Silencia avisos no terminal
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-os.environ["ANONYMIZED_TELEMETRY"] = "False"
-
 from dotenv import load_dotenv
 from chromadb.config import Settings
 from langchain_chroma import Chroma

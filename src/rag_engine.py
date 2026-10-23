@@ -1,4 +1,5 @@
 import os
+import time
 
 from dotenv import load_dotenv
 from chromadb.config import Settings
@@ -78,16 +79,36 @@ def ask_question(pergunta: str, k: int = 5) -> dict:
     if not api_key:
         raise ValueError("Chave OPENROUTER_API_KEY não encontrada. Verifique seu arquivo '.env'.")
     
-    llm = ChatOpenAI(
-        model="openrouter/free", # Modelos gratuitos
-        api_key=api_key,
-        base_url="https://openrouter.ai/api/v1",
-        temperature=0.1 # Evitar criatividade e alucinações do modelo
-    )
+    # Atualizado em outubro de 2026
+    modelos_gratuitos = [
+        "recursive/flint-v1.0:free",
+        "openrouter/free"
+    ]
+
+    resposta_ia = None
+    ultimo_erro = None
     
-    # Envia o prompt para a IA e recebe a resposta
-    resposta_ia = llm.invoke(prompt_final)
+    for modelo_atual in modelos_gratuitos:
+        try:
+            llm = ChatOpenAI(
+                model=modelo_atual, # Modelos gratuitos
+                api_key=api_key,
+                base_url="https://openrouter.ai/api/v1",
+                temperature=0.1, # Evitar criatividade e alucinações do modelo
+                max_retries=2, # Tenta 2 vezes internamente em caso de falha rápida
+                request_timeout=30 # Evita que o app fique travado
+            )
+            print(f"Consultando modelo: {modelo_atual}...")
+            resposta_ia = llm.invoke(prompt_final) # Envia prompt para IA e recebe a resposta
     
+        except Exception as e:
+            print(f"Aviso: O modelo '{modelo_atual} falhou. Tentando novamente em 3s...")
+            ultimo_erro = e
+            time.sleep(3)
+            
+    if not resposta_ia or not resposta_ia.content:
+        raise RuntimeError(f"Todos os modelos gratuitos estão sobrecarregados no momento, tente novamente em breve.\nDetalhe: {ultimo_erro}")
+        
     # Retorna um dicionário organizado
     return{
         "resposta": resposta_ia.content,

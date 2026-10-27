@@ -94,4 +94,4 @@ O navegador abrirá automaticamente no endereço local http://localhost:8501. Fa
 - **HuggingFace e PyTorch**: geração local de embeddings com ```sentence-transformers```;
 - **ChromaDB**: banco de dados vetorial leve e persistente no disco;
 - **OpenRouter**: acesso dinâmico a modelos de linguagem;
-    Streamlit: frontend reativo e acessível com histórico de sessão e componentes de chat.
+- **Streamlit**: frontend reativo e acessível com histórico de sessão e componentes de chat.

@@ -1,8 +1,8 @@
 # DocQA - Assistente Inteligente de Documentação Técnica
 
-Uma aplicação interativa de RAG (Retrieval-Augmented Generation) construída em Python para conversar com documentos técnicos e editais em PDF. Em vez de depender apenas do conhecimento geral do modelo ou sofrer com alucinações, o sistema faz uma busca semântica no documento fornecido e traz respostas acompanhadas das páginas exatas de onde o conteúdo foi extraído.
+Uma aplicação interativa de RAG (Retrieval-Augmented Generation) em Python para ajudar em análises de documentos técnicos e editais em PDF. Em vez de depender apenas do conhecimento geral do modelo ou sofrer com alucinações, o sistema faz uma busca semântica no documento fornecido e traz respostas acompanhadas das páginas de onde o conteúdo foi extraído.
 
-Este repositório nasceu como um projeto prático de estudos para entender de ponta a ponta como a arquitetura de RAG funciona, explorando desde a matemática dos vetores até o gerenciamento de sessões na web.
+Este repositório nasceu como um projeto prático de estudos para entender como a arquitetura de RAG funciona, explorando desde a matemática dos vetores até o gerenciamento de sessões na web.
 
 ---
 
